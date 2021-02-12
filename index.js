@@ -4,11 +4,12 @@ const cache = {}
 /**
  * The templating function.
  * 
- * @param {string} htmlString - A String of HTML content. (But can actually just be a string of anything.)
+ * @param {string} htmlString - A String of HTML content, or the path to a file
+ * the local disk. Paths must start with a slash (`/` or `\`).
  * @param {object} replacements - A object of replacement variables for `{{}}` tags. Example: `{'personName': 'Joe'}`
  * @param {string} [lang=en] - Language for the {i18n{}} merge tags. Defaults to English.
  */
-export default function html(htmlString, replacements = {}, lang = Router.currentLang || 'en') {
+export function html(htmlString, replacements = {}, lang = Router.currentLang || 'en') {
   return new Promise(async (resolve, reject) => {
 
     if (htmlDebug) {
@@ -20,6 +21,10 @@ export default function html(htmlString, replacements = {}, lang = Router.curren
       console.warn('html() was given an empty string, or something other than a string')
       resolve(htmlString)
       return
+    }
+
+    if (htmlString[0] === '/' || htmlString[0] === '\\') {
+      htmlString = await getFileContents(htmlString)
     }
 
     // parse {inc{}}
@@ -158,7 +163,7 @@ function incReplace(htmlString, replacements) {
         // TODO if Echoes releases on the web, this needs to look for templates on a web server.
         try {
           if (filePath.slice(-5) === '.json') {
-            fileContents = await getJSONFromFile(filePath)
+            fileContents = await getJSONFromFile(filePath, 'string')
           } else {
             // recursive action
             fileContents = await html(await getFileContents(filePath), replacements)
@@ -229,7 +234,7 @@ function generalVarsReplace(htmlString, replacements) {
  * @param {string} path - File path.
  * @param {boolean} [force] - Skip the cache and read the file from the disk.
  */
-function getFileContents(path, force = false) {
+export function getFileContents(path, force = false) {
   return new Promise((resolve, reject) => {
     if (typeof require !== 'function') {
       throw new Error('html.js does not have access to the file system')
@@ -260,20 +265,28 @@ function getFileContents(path, force = false) {
 
 /**
  * Gets JSON file contents. This will ensure that the contents of the file are
- * valid JSON, and it will return the stringified JSON.
+ * valid JSON, and it will return the JSON.
  * 
+ * @param {string} path - File path on the local disk.
+ * @param {string} [returnAs] - `string` or `object`. Defaults to `object`.
+ * @param {boolean} [force] - Skip the cache and read the file from the disk.
  * @returns {object}
  */
-function getJSONFromFile(path, force = false) {
+export function getJSONFromFile(path, returnAs = 'object', force = false) {
   return new Promise(async (resolve, reject) => {
     try {
       let fileContents = await getFileContents(path, force)
 
       // ensure it's valid JSON by trying to parse it
-      let json = JSON.parse(fileContents.trim())
+      let jsonObj = JSON.parse(fileContents.trim())
 
-      // convert it back to a string since we are embedding it in a template
-      resolve(JSON.stringify(json))
+      if (returnAs === 'string') {
+        // stringifying back (instead of returning fileContents) will ensure the
+        // object is perfectly formatted for template embedding
+        resolve(JSON.stringify(jsonObj))
+      } else if (returnAs === 'object') {
+        resolve(jsonObj)
+      }
     } catch (e) {
       console.log(e)
       throw new Error('JSON file contained invalid JSON: ' + path)
