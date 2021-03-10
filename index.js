@@ -108,7 +108,7 @@ function i18nReplace(htmlString, lang) {
     
   // replace the tags with the correct strings
   for (let i18nKey of i18nTags) {
-    htmlString = htmlString.replace(`{i18n{${i18nKey}}}`, window.i18n[lang][i18nKey])
+    htmlString = htmlString.replace(`{i18n{${i18nKey}}}`, window.i18n[lang][i18nKey] || i18nKey)
   }
 
   return htmlString
