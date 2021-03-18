@@ -4,8 +4,9 @@ const cache = {}
 /**
  * The templating function.
  * 
- * @param {string} htmlString - A String of HTML content, or the path to a file
- * the local disk. Paths must start with a slash (`/` or `\`).
+ * @param {(string|DocumentFragment)} htmlString - A String of HTML content, or the path to a file
+ * the local disk. Paths must start with a slash (`/` or `\`). Can also be a
+ * DocumentFragment. Either way, a string will be returned.
  * @param {object} replacements - A object of replacement variables for `{{}}` tags. Example: `{'personName': 'Joe'}`
  * @param {string} [lang=en] - Language for the {i18n{}} merge tags. Defaults to English.
  */
@@ -15,6 +16,13 @@ export function html(htmlString, replacements = {}, lang = Router.currentLang ||
     if (htmlDebug) {
       console.log('----- Now parsing new HTML string -----')
       console.log(htmlString.slice(0, 20))
+    }
+
+    if (htmlString instanceof DocumentFragment) {
+      let temp = document.createElement('div')
+      temp.appendChild(htmlString)
+      htmlString = temp.innerHTML
+      temp.remove()
     }
 
     if (typeof htmlString !== 'string' || !htmlString.length) {
