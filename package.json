@@ -2,5 +2,11 @@
   "name": "html.js",
   "version": "1.0.1",
   "author": "somebeaver",
-  "private": true
+  "private": true,
+  "scripts": {
+    "docs": "jsdoc2md ./src/html.js > DOCS.md"
+  },
+  "devDependencies": {
+    "jsdoc-to-markdown": "^6.0.0"
+  }
 }

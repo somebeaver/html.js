@@ -1,14 +1,23 @@
 # html.js
 
-Basic HTML templating library in vanilla JS. This module provides a default
-export `html`.
+Bare bones dependency-free ES6 HTML templating library in vanilla JS. Features include:
+
+- Nested templates
+- i18n string substitution out of the box
+- General variable substitution
+- File includes (in Electron)
+
+## API Reference
+
+A reference of all public html.js methods is available in
+**[DOCS.md](DOCS.md)**.
 
 ## Example
 
 ```javascript
-import html from 'html.js'
+import { html } from 'html.js'
 
-let markup = await html('/home.html', {'name': 'John'})
+let markup = await html('/home.html', {'name': 'John'}) // file paths require Electron
 document.querySelector('#home').innerHTML(markup)
 ```
 
@@ -30,7 +39,7 @@ Use these tags within your `.html` files.
 
 ```javascript
 {i18n{object.key.for.your.string}}
-```
+```git status
 
 - `{{}}` **General variable replacement**. If the variable does not exist in the
   replacements object, or is null or undefined, the merge tag will be
