@@ -25,28 +25,33 @@ document.querySelector('#home').innerHTML(markup)
 
 Use these tags within your `.html` files.
 
-- `{inc{}}` **Include**. Loads the contents of the file, files ending in `.json`
-  fill be flattened so that their contents can be included inline within `.html`
-  files. Supports recursive includes.
+### `{inc{}}`
+**Include**. Loads the contents of the file, files ending in `.json` fill be
+flattened so that their contents can be included inline within `.html` files.
+Supports recursive includes.
 
-```javascript
-{inc{/path/from/root.html}}
+```html
+<header>
+  {inc{/path/to/header.html}}
+</header>
 ```
 
-- `{i18n{}}` **Internationalization**. Morphs into a string using the global
-  `window.i18n` strings. The language is set at the function call level, not
-  at the template level.
+### `{i18n{}}` 
+**Internationalization**. Morphs into a string using the global `window.i18n`
+strings. The language is set at the function call level, not at the template
+level.
 
-```javascript
-{i18n{object.key.for.your.string}}
-```git status
+```html
+<div title="{i18n{string-key}}"></div>
+```
 
-- `{{}}` **General variable replacement**. If the variable does not exist in the
-  replacements object, or is null or undefined, the merge tag will be
-  substituted with an empty string.
+### `{{}}`
+**General variable replacement**. If the variable does not exist in the
+replacements object, or is null or undefined, the merge tag will be substituted
+with an empty string.
 
-```javascript
-{{personName}}
+```html
+<span>{{personName}}</span>
 ```
 
 This module will also automatically remove all <!-- --> comments.
@@ -55,8 +60,10 @@ This module will also automatically remove all <!-- --> comments.
 for the attribute and double quotes for the inner items. Double quotes are the only valid JSON
 quotes. Example:
 
-    // good
-    <custom-element cols='["track_num", "title"]'></custom-element>
+```html
+// good
+<custom-element cols='["track_num", "title"]'></custom-element>
 
-    // bad
-    <custom-element cols="['track_num', 'title']"></custom-element>
+// bad
+<custom-element cols="['track_num', 'title']"></custom-element>
+```
