@@ -67,3 +67,7 @@ quotes. Example:
 // bad
 <custom-element cols="['track_num', 'title']"></custom-element>
 ```
+
+## License
+
+Licensed under the Mozilla Public License 2.0.
