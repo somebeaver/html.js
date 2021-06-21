@@ -241,42 +241,6 @@ function generalVarsReplace(htmlString, replacements) {
 }
 
 /**
- * Gets the raw contents of a text file on the local disk. Must be running in
- * Electron for this to work.
- *
- * @param {string} path - File path.
- * @param {boolean} [force] - Skip the cache and read the file from the disk.
- */
-export function getFileContents(path, force = false) {
-  return new Promise((resolve, reject) => {
-    if (typeof require !== 'function') {
-      throw new Error('html.js does not have access to the file system')
-    }
-    
-    const fs = require('fs')
-    
-    if (typeof fs !== 'object') {
-      throw new Error('html.js does not have access to the file system')
-    }
-
-    if (!(path in cache) || force) {
-      try  {
-        let fileContents = fs.readFileSync(__dirname + path, 'utf8')
-
-        cache[path] = fileContents
-        
-        resolve(fileContents)
-      } catch (error) {
-        console.warn(error)
-        reject()
-      }
-    } else {  
-      resolve(cache[path])
-    }
-  })
-}
-
-/**
  * Gets JSON file contents. This will ensure that the contents of the file are
  * valid JSON, and it will return the JSON.
  * 
@@ -289,13 +253,20 @@ export function getJSONFromFile(path, returnAs = 'object', force = false) {
   return new Promise(async (resolve, reject) => {
     try {
       let fileContents = await getFileContents(path, force)
+      let jsonObj
 
-      // ensure it's valid JSON by trying to parse it
-      let jsonObj = JSON.parse(fileContents.trim())
+      // make sure we are working with an object
+      if (typeof fileContents === 'object' && fileContents !== null) {
+        jsonObj = fileContents
+      } else if (typeof fileContents === 'string') {
+        jsonObj = JSON.parse(fileContents.trim())
+      } else {
+        throw new Error('Received unexpected data instead of JSON')
+      }
 
       if (returnAs === 'string') {
         // stringifying back (instead of returning fileContents) will ensure the
-        // object is perfectly formatted for template embedding
+        // object is perfectly formatted for being embedding into templates
         resolve(JSON.stringify(jsonObj))
       } else if (returnAs === 'object') {
         resolve(jsonObj)
@@ -304,5 +275,73 @@ export function getJSONFromFile(path, returnAs = 'object', force = false) {
       console.log(e)
       throw new Error('JSON file contained invalid JSON: ' + path)
     }
+  })
+}
+
+/**
+ * Gets the raw contents of a text file on the local disk or a Cardinal server.
+ *
+ * @param {string} path - File path.
+ * @param {boolean} [force] - Skip the cache and read the file from the disk.
+ * Defaults to false.
+ * @param {boolean} [remoteServer] - Fetch the files from Cardinal Server
+ * instead of the disk. Defaults to true.
+ */
+export async function getFileContents(path, force = false, remoteServer = true) {
+  if (remoteServer) {
+    return await fetchFileContentsFromServer(path)
+  } else if (!remoteServer) {
+    return await fetchFileContentsFromDisk(path, force)
+  } else {
+    throw new Error('Incorrect parameter usage of getFileContents()')
+  }
+}
+
+/**
+ * Gets a HTML file from Cardinal Server.
+ * 
+ * @param {string} path - File path.
+ */
+export async function fetchFileContentsFromServer(path) {
+  if (!('Bridge' in window)) throw new Error('Cannot get remote template without global Bridge')
+
+  try {
+    return await Bridge.httpStatic(`/music/${path}`)
+  } catch (e) {
+    throw e
+  }
+}
+
+/**
+ * Gets the contents of a file from the disk. Requires Electron.
+ * 
+ * Will cache the contents of the file after the first lookup.
+ * 
+ * @param {string} path - File path.
+ * @param {boolean} [force] - Skip the cache and read the file from the disk.
+ */
+export async function fetchFileContentsFromDisk(path, force) {
+  return new Promise(async (resolve, reject) => {
+
+    if (typeof require !== 'function') throw new Error('fetchFileContentsFromDisk() requires Electron')
+    
+    const fs = require('fs')
+    if (typeof fs !== 'object') throw new Error('html.js does not have access to the file system')
+
+    if (!(path in cache) || force) {
+      try {
+        let fileContents = fs.readFileSync(__dirname + path, 'utf8')
+
+        cache[path] = fileContents
+        
+        resolve(fileContents)
+      } catch (error) {
+        console.warn(error)
+        reject()
+      }
+    } else {  
+      resolve(cache[path])
+    }
+
   })
 }
