@@ -288,6 +288,11 @@ export function getJSONFromFile(path, returnAs = 'object', force = false) {
  * instead of the disk. Defaults to true.
  */
 export async function getFileContents(path, force = false, remoteServer = true) {
+  // TODO move to andromeda
+  if ('Bridge' in window && Bridge.env === 'electron') {
+    remoteServer = false
+  }
+
   if (remoteServer) {
     return await fetchFileContentsFromServer(path)
   } else if (!remoteServer) {
